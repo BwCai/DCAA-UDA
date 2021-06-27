@@ -1,0 +1,101 @@
+trainset: gta5
+valset: cityscapes
+
+model:
+    arch: deeplab101
+    pretrained: True
+    bn: sync_bn #bn, sync_abn, abn, gn
+    init:
+        init_type: kaiming
+        init_gain: 0.02
+    basenet:
+        name: psp_base
+        version: resnet101
+        aux_loss: True
+    default_gpu: 0
+
+data:
+    source:
+        name: gta5_multimodal_mixture
+        rootpath: [dataset/translation/gtav2cityscapes,]
+        split: all
+        img_rows: 1052
+        img_cols: 1914
+        batch_size: 1 #2
+        is_transform: True
+        img_norm: True
+        shuffle: True
+        n_class: 19
+    target:
+        name: cityscapes_multimodal
+        rootpath: [dataset/Cityscapes, dataset/Cityscapes_foggy]
+        split: train
+        img_rows: 1024
+        img_cols: 2048
+        batch_size: 1 #2
+        is_transform: True
+        img_norm: True
+        shuffle: True
+        n_class: 19
+    source_valid:
+        name: gta5_multimodal_mixture
+        rootpath: [dataset/translation/gtav2cityfoggy,]
+        split: val
+        img_rows: 1052
+        img_cols: 1914
+        batch_size: 1 #2
+        n_class: 19
+        shuffle: True
+    target_valid:
+        name: cityscapes_multimodal
+        rootpath: [dataset/Cityscapes, dataset/Cityscapes_foggy, dataset/Cityscapes_rain]
+        split: val #train
+        img_rows: 1024
+        img_cols: 2048
+        batch_size: 1 #2
+        shuffle: False
+        n_class: 19
+
+    num_workers: 2 #2 # 6 # 8
+    n_class: 19
+training:
+    epoches: 84
+    bnaffine: True
+    train_iters: 90000
+    freeze_bn: False
+    val_interval: 1000
+    print_interval: 20
+    n_workers: 2
+    cls_feature_weight: 0.7
+    loss_source_seg: True
+    loss_L2_cls: True
+    loss_pseudo_label: True
+    loss_adv_lambda: 0.001 # 0.001, 0.0002, 0.1
+    valid_classes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    augmentations:
+        rsize: 2200
+        rcrop: [896, 512]
+        hflip: 0.5
+    optimizer:
+        name: 'SGD'
+        lr: 2.5e-4 # 0.0001
+        weight_decay: 2.0e-4
+        momentum: 0.9 # 5e-4
+    optimizer_D:
+        name: 'Adam'
+        lr: 0.0001 # 0.0002 # for adam
+        betas: [0.9, 0.99] # adam [0.5, 0.999]
+    loss:
+        name: 'cross_entropy'
+        size_average: True
+    lr_schedule:
+        name: 'poly_lr'
+        gamma: 0.9
+        max_iter: 90000
+    resume: runs/gtav2cityscapesDC_deeplab101_stage2_model-54037e33.pkl
+    Pred_resume: runs/gtav2cityscapesDC_deeplab101_stage2_model-54037e33.pkl
+    optimizer_resume: False #True
+    gan_resume: False
+    resume_flag: True
+test:
+    path: runs/gtav2cityscapesDC_deeplab101_stage2_model-54037e33.pkl

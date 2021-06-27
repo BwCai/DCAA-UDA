@@ -1,0 +1,101 @@
+trainset: gta5
+valset: cityscapes
+
+model:
+    arch: deeplab101
+    pretrained: True
+    bn: sync_bn #bn, sync_abn, abn, gn
+    init:
+        init_type: kaiming
+        init_gain: 0.02
+    basenet:
+        name: psp_base
+        version: resnet101
+        aux_loss: True
+    default_gpu: 0
+
+data:
+    source:
+        name: gta5_multimodal_mixture
+        rootpath: [dataset/translation/gtav2cityscapes, dataset/translation/gtav2cityfoggy, dataset/translation/gtav2cityrain]
+        split: all
+        img_rows: 1052
+        img_cols: 1914
+        batch_size: 2
+        is_transform: True
+        img_norm: True
+        shuffle: True
+        n_class: 19
+    target:
+        name: cityscapes_multimodal
+        rootpath: [dataset/Cityscapes, dataset/Cityscapes_foggy, dataset/Cityscapes_rain]
+        split: train
+        img_rows: 1024
+        img_cols: 2048
+        batch_size: 2
+        is_transform: True
+        img_norm: True
+        shuffle: True
+        n_class: 19
+    source_valid:
+        name: gta5_multimodal_mixture
+        rootpath: [dataset/translation/gtav2cityscapes, dataset/translation/gtav2cityfoggy, dataset/translation/gtav2cityrain]
+        split: val
+        img_rows: 1052
+        img_cols: 1914
+        batch_size: 2
+        n_class: 19
+        shuffle: True
+    target_valid:
+        name: cityscapes_multimodal
+        rootpath: [dataset/Cityscapes, dataset/Cityscapes_foggy, dataset/Cityscapes_rain]
+        split: val
+        img_rows: 1024
+        img_cols: 2048
+        batch_size: 2
+        shuffle: True
+        n_class: 19
+
+    num_workers: 6
+    n_class: 19
+training:
+    epoches: 35
+    bnaffine: True
+    train_iters: 120000
+    freeze_bn: True
+    val_interval: 5000
+    print_interval: 20
+    n_workers: 8
+    cls_feature_weight: 0.7
+    loss_source_seg: True
+    loss_L2_cls: False
+    loss_pseudo_label: False
+    loss_adv_lambda: 0.01 
+    valid_classes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    augmentations:
+        rsize: 2200
+        rcrop: [1024, 512]
+        hflip: 0.5
+    optimizer:
+        name: 'SGD'
+        lr: 1.0e-4 
+        weight_decay: 2.0e-4
+        momentum: 0.9 
+    optimizer_D:
+        name: 'Adam'
+        lr: 0.0001 
+        betas: [0.9, 0.99] 
+    loss:
+        name: 'cross_entropy' 
+        size_average: True
+        weight: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 6.0, 2.0, 20.0]
+    lr_schedule:
+        name: 'poly_lr'
+        gamma: 0.9
+        max_iter: 120000
+    resume: pretrained/deeplab101_warmup.pkl
+    Pred_resume: pretrained/deeplab101_warmup.pkl
+    optimizer_resume: False 
+    gan_resume: False
+    resume_flag: True
+
